@@ -5,10 +5,6 @@ date: "2024-12-23"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Preparing Variables
 
 The variables I will use in the beginning:
@@ -17,11 +13,17 @@ The variables I will use in the beginning:
   - Daily volatility of Oil and Gasoline Futures
   - Weekly volatility of Oil and Gasoline Futures 
 
-```{r cars}
-# Here import libraries and prepare the variables
+```{r importing}
+library(tidyverse)
+data <- readRDS("data/preppedData.rds")
 ```
 
 # Prediction 1: Fitting a simple VAR model on historical data
+
+```{r}
+
+```
+
 
 ## Deciding number of lags 
 

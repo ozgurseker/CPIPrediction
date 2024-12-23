@@ -31,6 +31,12 @@ gasoline_monthly <- gasoline_monthly %>%
          Month = month(Date),
          Day = day(Date)) %>% select(-Date)
 
+Gasoline <- left_join(gasoline_monthly %>% select(Year, Month, GasolineFutureMonthly), 
+                      gasoline_weekly %>% group_by(Year, Month) %>%
+            summarise(Gasoline_Volatility_Weekly = sd(GasolineFutureWeekly))) %>%
+  left_join(gasoline_daily %>% group_by(Year, Month) %>%
+              summarise(Gasoline_Volatility_Daily = sd(GasolineFutureDaily)))
+
 # Oil Futures
 
 oil_daily <- read_xlsx("data/oilfutures_daily.xlsx") %>% select(Date, Close) %>%
@@ -49,3 +55,12 @@ oil_monthly <- read_xlsx("data/oilfutures_monthly.xlsx") %>% select(Date, Close)
          Month = month(Date),
          Day = day(Date)) %>% select(-Date)
 
+Oil <- left_join(oil_monthly %>% select(Year, Month, OilFutureMonthly), 
+                 oil_weekly %>% group_by(Year, Month) %>%
+                        summarise(Oil_Volatility_Weekly = sd(OilFutureWeekly))) %>%
+  left_join(oil_daily %>% group_by(Year, Month) %>%
+              summarise(Oil_Volatility_Daily = sd(OilFutureDaily)))
+
+dfcombined <- left_join(cpimotor, Gasoline) %>% left_join(Oil)
+
+saveRDS(dfcombined, file = "data/preppedData.rds")
