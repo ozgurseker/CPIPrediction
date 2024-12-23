@@ -21,7 +21,7 @@ library(dynlm)
 
 data <- readRDS("data/preppedData.rds")
 data <- data %>% mutate(Change_CPI = log(CPI_Motor) - log(lag(CPI_Motor)),
-                        Change_OilPrice = log(OilFutureMonthly) - log(lag(OilFutureMonthly)),
+                        Change_OilPrice = log(OilMonthlyAverage) - log(lag(OilMonthlyAverage)),
                         Change_GasPrice = log(GasolineFutureMonthly) - log(lag(GasolineFutureMonthly)),
                         Change_OilVolDaily = log(Oil_Volatility_Daily) - log(lag(Oil_Volatility_Daily)),
                         Change_GasVolDaily = log(Gasoline_Volatility_Daily) - log(lag(Gasoline_Volatility_Daily)))
@@ -38,24 +38,38 @@ add_lag <- function(eqtn, var, p){
   }
   return(eqtn)
 }
+
+RMSE_out_of_sample <- function(mdl, data_test, data, printout = T){
+  data$prediction <- predict(mdl, data)
+  data_test <- left_join(data_test, data %>% select(Year, Month, prediction)) %>%
+    select(Year, Month, Change_CPI, prediction) %>% filter(complete.cases(.))
+  npredictions <- sum(!is.na(data_test$prediction))
+  lastmonth <- paste(data_test$Year[nrow(data_test)],data_test$Month[nrow(data_test)], sep = "-")
+  rmse <- sqrt(sum((data_test$Change_CPI - data_test$prediction)**2,na.rm = T))
+  if(printout){
+    print(paste("Number of Predicted Terms:", npredictions))
+    print(paste("Last predicted month:", lastmonth))
+    print(paste("RMSE:", round(rmse, 5)))
+  }
+  return(rmse)
+}
 ```
 
 # Prediction 1: Fitting a simple VAR model on historical data
 
 ```{r}
-p <- 5 # Number of lags
-exp_vars <- c("Change_OilPrice", "Change_GasPrice", "Change_CPI") 
+p <- 2 # Number of lags
+exp_vars <- c("Change_OilPrice", "Change_GasPrice") 
 frml <- "Change_CPI ~"
 for(v in exp_vars){
-  for(i in 1:p){
+  for(i in 0:p){
     frml <- add_lag(frml, v, i)
   }
 }
 
 mdl <- lm(as.formula(frml), data_train)
-predictions <- predict(mdl, data)
-data_test1 <- data_test
-data_test1$predictions <- predictions[(length(predictions)-n_test+1) : length(predictions)]
+summary(mdl)
+RMSE_out_of_sample(mdl, data_test, data)
 
 ```
 
