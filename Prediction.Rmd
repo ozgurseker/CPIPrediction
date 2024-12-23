@@ -1,0 +1,36 @@
+---
+title: "CPI Motor Change Prediction"
+author: "Ozgur"
+date: "2024-12-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Preparing Variables
+
+The variables I will use in the beginning:
+  - Monthly Change of CPI Motor
+  - Monthly Change of Oil and Gasoline Futures
+  - Daily volatility of Oil and Gasoline Futures
+  - Weekly volatility of Oil and Gasoline Futures 
+
+```{r cars}
+# Here import libraries and prepare the variables
+```
+
+# Prediction 1: Fitting a simple VAR model on historical data
+
+## Deciding number of lags 
+
+## Adding seasonality
+
+# Prediction 2: Fitting a simple VAR on last 5 years only
+
+# Prediction 3: Deciding the window of VAR training by performance
+
+# Prediction 4: Adding Import/Export Data
+
+# Prediction 5: 
