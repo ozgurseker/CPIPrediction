@@ -46,10 +46,19 @@ RMSE_out_of_sample <- function(mdl, data_test, data, printout = T){
   npredictions <- sum(!is.na(data_test$prediction))
   lastmonth <- paste(data_test$Year[nrow(data_test)],data_test$Month[nrow(data_test)], sep = "-")
   rmse <- sqrt(sum((data_test$Change_CPI - data_test$prediction)**2,na.rm = T))
+  rmse_0 <- sqrt(sum((data_test$Change_CPI)**2,na.rm = T))
+  data_train <- data %>% filter(!Year %in% data_test$Year)  
+  rmse_mean <- sqrt(sum((data_test$Change_CPI- mean(data_train$Change_CPI, na.rm = T)  )**2,na.rm = T))
   if(printout){
     print(paste("Number of Predicted Terms:", npredictions))
     print(paste("Last predicted month:", lastmonth))
     print(paste("RMSE:", round(rmse, 5)))
+    print(paste("RMSE of Predicting Zero Only (Benchmark):", round(rmse_0, 5)))
+    print(paste("RMSE of Predicting Historical Average (Benchmark):", round(rmse_mean, 5)))
+    print(paste("Variance of Real Values:", round(var(data_test$Change_CPI),5)))
+    print(paste("Std Dev of Real Values:", round(sd(data_test$Change_CPI),5)))
+    print(paste("Average Real Value:", round(mean(data_test$Change_CPI),5)))
+    print(paste("Average Prediction:", round(mean(data_test$prediction),5)))
   }
   return(rmse)
 }
@@ -62,10 +71,14 @@ p <- 2 # Number of lags
 exp_vars <- c("Change_OilPrice", "Change_GasPrice") 
 frml <- "Change_CPI ~"
 for(v in exp_vars){
-  for(i in 0:p){
+  for(i in 1:p){
     frml <- add_lag(frml, v, i)
   }
 }
+
+frml <- add_lag(frml, "Change_OilPrice", 0)
+frml <- add_lag(frml, "Change_CPI", 1)
+frml <- add_lag(frml, "Change_CPI", 12)
 
 mdl <- lm(as.formula(frml), data_train)
 summary(mdl)
@@ -78,9 +91,13 @@ RMSE_out_of_sample(mdl, data_test, data)
 
 ## Adding seasonality
 
-# Prediction 2: Fitting a simple VAR on last 5 years only
+## Checking the time series plot and removing extreme periods
 
-# Prediction 3: Deciding the window of VAR training by performance
+## Fitting a simple VAR on last 5 years only
+
+# Prediction 2: Deciding the window of VAR training by in sample performance
+
+# Prediction 3: Random Forest and Xboosts
 
 # Prediction 4: Adding Import/Export Data
 
