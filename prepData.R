@@ -55,11 +55,13 @@ oil_monthly <- read_xlsx("data/oilfutures_monthly.xlsx") %>% select(Date, Close)
          Month = month(Date),
          Day = day(Date)) %>% select(-Date)
 
-Oil <- left_join(oil_monthly %>% select(Year, Month, OilFutureMonthly), 
+
+
+Oil <- left_join(oil_daily %>% group_by(Year, Month) %>%
+                   summarise(Oil_Volatility_Daily = sd(OilFutureDaily),
+                             OilMonthlyAverage = mean(OilFutureDaily)), 
                  oil_weekly %>% group_by(Year, Month) %>%
-                        summarise(Oil_Volatility_Weekly = sd(OilFutureWeekly))) %>%
-  left_join(oil_daily %>% group_by(Year, Month) %>%
-              summarise(Oil_Volatility_Daily = sd(OilFutureDaily)))
+                        summarise(Oil_Volatility_Weekly = sd(OilFutureWeekly)))
 
 dfcombined <- left_join(cpimotor, Gasoline) %>% left_join(Oil)
 

@@ -13,14 +13,49 @@ The variables I will use in the beginning:
   - Daily volatility of Oil and Gasoline Futures
   - Weekly volatility of Oil and Gasoline Futures 
 
+To remove any leakage, split the data to train models and test at the beginning  of 2003. I will report the predictions for the monthly CPI-motor changes starting Jan 2023.  
+
 ```{r importing}
 library(tidyverse)
+library(dynlm)
+
 data <- readRDS("data/preppedData.rds")
+data <- data %>% mutate(Change_CPI = log(CPI_Motor) - log(lag(CPI_Motor)),
+                        Change_OilPrice = log(OilFutureMonthly) - log(lag(OilFutureMonthly)),
+                        Change_GasPrice = log(GasolineFutureMonthly) - log(lag(GasolineFutureMonthly)),
+                        Change_OilVolDaily = log(Oil_Volatility_Daily) - log(lag(Oil_Volatility_Daily)),
+                        Change_GasVolDaily = log(Gasoline_Volatility_Daily) - log(lag(Gasoline_Volatility_Daily)))
+  
+data_train <- data %>% filter(Year < 2023)
+data_test <- data %>% filter(Year > 2022)
+n_test <- nrow(data_test)
+
+add_lag <- function(eqtn, var, p){
+  if(str_ends(eqtn, "~")){
+    eqtn <- paste0(eqtn, " lag(",var,",",p,")")
+  } else{
+    eqtn <- paste0(eqtn, " + lag(",var,",",p,")")
+  }
+  return(eqtn)
+}
 ```
 
 # Prediction 1: Fitting a simple VAR model on historical data
 
 ```{r}
+p <- 5 # Number of lags
+exp_vars <- c("Change_OilPrice", "Change_GasPrice", "Change_CPI") 
+frml <- "Change_CPI ~"
+for(v in exp_vars){
+  for(i in 1:p){
+    frml <- add_lag(frml, v, i)
+  }
+}
+
+mdl <- lm(as.formula(frml), data_train)
+predictions <- predict(mdl, data)
+data_test1 <- data_test
+data_test1$predictions <- predictions[(length(predictions)-n_test+1) : length(predictions)]
 
 ```
 
